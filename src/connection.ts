@@ -2,6 +2,9 @@ import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaile
 import { Boom } from "@hapi/boom";
 import { pino } from "pino";
 import path from "path";
+import { extractMessage } from "./exports/messages";
+import { getMediaContent } from "./exports/dowMedia";
+import { handleMenuCommand } from "./commands";
 import { question, logger } from "./exports";
 
 export async function reng() {
@@ -50,6 +53,51 @@ export async function reng() {
 
    
     riko.ev.on("creds.update", saveCreds);
+    //
+    riko.ev.on("messages.upsert", async (pi) => {
+        try {
+            const message = pi.messages && pi.messages[0];
+            if (!message || !message.message) return; // Ignora mensagens inválidas
+    
+            const tfrom = message.key.remoteJid;
+            const fromUser =
+                message.key?.participant?.split("@")[0] || message.key?.remoteJid?.split("@")[0];
+            const userName = message.pushName || fromUser; // Nome do usuário ou número
+            const messageText = message.message?.conversation || 
+                                message.message?.extendedTextMessage?.text || '';
+    
+            // Ignora mensagens enviadas pelo próprio bot
+            //if (message.key.fromMe) return;
+    
+            // Extrai mensagem completa e verifica se é um comando
+            const { fullMessage, isCommand } = extractMessage(message);
+    
+            console.log(`Mensagem recebida de ${userName}: ${fullMessage}`);
+            const messageType = message?.message ? Object.keys(message.message)[0] : null;
+            if (messageType) console.log(`Tipo de mensagem: ${messageType}`);
+            
+            const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+            if (quoted) console.log("Mensagem citada:", quoted);
+    
+            // Tratamento de comandos
+            if (isCommand) {
+                console.log("Processando comando...");
+                await handleMenuCommand(riko, tfrom, message);
+                return;
+            }
+    
+            // Resposta automática para mensagens "oi" ou "ola"
+            if (messageText) {
+                const toLowerCase = messageText.toLowerCase();
+                if (toLowerCase.includes("oi") || toLowerCase.includes("ola")) {
+                    console.log("Respondendo a saudação...");
+                    //await pico.sendMessage(tfrom, { text: "Olá, tudo bem?" });
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao processar a mensagem:", error);
+        }
+    });
     
     return riko;
 }
