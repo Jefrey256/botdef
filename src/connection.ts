@@ -2,6 +2,8 @@ import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaile
 import { Boom } from "@hapi/boom";
 import { pino } from "pino";
 import path from "path";
+import { iniciarSistemaMute } from "./commands/system/muteSystem";
+import { iniciarAntiLink } from "./commands/system/antiLink";
 import { extractMessage } from "./exports/messages";
 import { getMediaContent } from "./exports/dowMedia";
 import { handleMenuCommand } from "./commands";
@@ -11,6 +13,7 @@ export async function reng() {
     const logger = pino({ level: "silent" });
     const { version } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState(path.resolve(__dirname, "../database/qr-code"));
+    
 
     const riko = makeWASocket({
         version,
@@ -22,6 +25,9 @@ export async function reng() {
 
         syncFullHistory: true
     });
+    console.log(riko);
+    iniciarSistemaMute(riko)
+    iniciarAntiLink(riko)
 
     riko.ev.on("connection.update", (update)=>{
         const {connection, lastDisconnect } = update
@@ -98,6 +104,10 @@ export async function reng() {
             console.error("Erro ao processar a mensagem:", error);
         }
     });
+    //
     
+    //
+    
+   
     return riko;
 }

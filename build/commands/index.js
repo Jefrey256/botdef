@@ -20,6 +20,14 @@ const ftperfil_1 = require("./owner/ftperfil");
 const dow_1 = require("./users/dow");
 const delete_1 = require("./admin/delete");
 const tesStk_1 = require("./users/tesStk");
+const velha_1 = require("./users/velha");
+const anti_1 = require("./admin/anti");
+const mutar_1 = require("./admin/mutar");
+const ban_1 = require("./admin/ban");
+const desmutar_1 = require("./admin/desmutar");
+const kick_1 = require("./admin/kick");
+//import { mutar, desmutar } from "./admin/mute";
+//import { figall } from "./users/boostfig";
 // Fim comandos
 // Lista de comandos restritos para administradores
 const adminCommands = ['ft', "del", 'ping']; // Comandos apenas para 
@@ -69,18 +77,21 @@ function handleMenuCommand(pico, from, messageDetails) {
         }
         // Mapeamento de comandos disponíveis
         const commands = {
+            // fig: figall,
+            ban: ban_1.ban,
+            kick: kick_1.kick,
+            antilink: anti_1.antilink,
+            velha: velha_1.velha,
+            mutar: mutar_1.mutar,
+            desmutar: desmutar_1.desmutar,
             help: menu_1.menu,
             menu: menu_1.menu,
             ft: ftperfil_1.alterarP, // Apenas admin pode usar
             d: dow_1.videoDow,
             ping: ping_1.ping, // Apenas admin pode usar
             // Comandos de figurinha
-            toimg: sticker_1.convertStickerToImage,
-            tomp4: sticker_1.convertStickerToGif,
-            s: sticker_1.createImageSticker,
-            sticker: sticker_1.createImageSticker,
-            stk: sticker_1.createVideoSticker,
-            f: sticker_1.createVideoSticker,
+            s: sticker_1.stickerAll,
+            togif: sticker_1.stickerAll,
             pi: tesStk_1.createImageSticker1,
             // Fim
             del: delete_1.testeDel

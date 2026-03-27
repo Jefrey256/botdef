@@ -1,208 +1,223 @@
+import ffmpeg from "fluent-ffmpeg";
+import { mkdir, writeFile, rm } from "fs/promises";
 import { join } from "path";
-import { writeFile, mkdir, rm } from "fs/promises";
-import { downloadContentFromMessage } from "@whiskeysockets/baileys";
-import { exec } from "child_process";
-import { promisify } from "util";
-import axios from "axios";
 import fs from "fs";
+import { downloadContentFromMessage } from "@whiskeysockets/baileys";
 
-const execPromise = promisify(exec);
+const PACKNAME = "Meu Bot";
+const AUTHOR = "Jefrey";
 
-/**
- * Função para criar figurinha a partir de uma imagem.
- */
-export async function createImageSticker(pico: any, from: string, messageDetails: any) {
-  const mediaMessage = messageDetails.message?.imageMessage ||
-                       messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+export async function stickerAll(pico: any, from: string, messageDetails: any) {
+  const msg = messageDetails.message;
 
-  if (!mediaMessage) {
-    await pico.sendMessage(from, { text: "Envie ou marque uma imagem para criar uma figurinha." });
-    return;
-  }
+  const imageMessage =
+    msg?.imageMessage ||
+    msg?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
 
-  try {
-    // Diretório de saída
-    const outputFolder = "./assets/stickers";
-    await mkdir(outputFolder, { recursive: true });
+  const videoMessage =
+    msg?.videoMessage ||
+    msg?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
 
-    const fileExtension = "jpeg";  // Como é uma imagem, sempre será jpeg
-    const inputPath = join(outputFolder, `${Date.now()}.${fileExtension}`);
-    const stickerPath = join(outputFolder, `${Date.now()}.webp`);
+  const stickerMessage =
+    msg?.stickerMessage ||
+    msg?.extendedTextMessage?.contextInfo?.quotedMessage?.stickerMessage;
 
-    // Baixar mídia
-    const stream = await downloadContentFromMessage(mediaMessage, "image");
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream) {
-      chunks.push(chunk);
-    }
-    await writeFile(inputPath, Buffer.concat(chunks));
+  const text =
+    msg?.conversation ||
+    msg?.extendedTextMessage?.text ||
+    "";
 
-    // Converter imagem para figurinha
-    const command = `ffmpeg -i "${inputPath}" -vcodec libwebp -vf "scale=512:512:force_original_aspect_ratio=increase,crop=512:512,setsar=1" -loop 0 -preset default -an -vsync 0 -s 512x512 -y "${stickerPath}"`;
-    await execPromise(command);
+  const isToImg = text.includes("toimg");
+  const isToGif = text.includes("togif");
 
-    // Enviar figurinha
-    await pico.sendMessage(from, { sticker: { url: stickerPath } });
+  const folder = "./assets/temp";
+  await mkdir(folder, { recursive: true });
 
-    // Remover os arquivos temporários
-    await rm(inputPath);
-    await rm(stickerPath);
-
-    // Remover a pasta, se estiver vazia
-    await rm(outputFolder, { recursive: true, force: true });
-
-  } catch (error) {
-    console.error("Erro ao criar figurinha:", error);
-    await pico.sendMessage(from, { text: "Erro ao criar figurinha. Certifique-se de que a mídia está correta e tente novamente." });
-  }
-}
-
-
-//aparti de video 
-
-export async function createVideoSticker(pico: any, from: string, messageDetails: any) {
-  const mediaMessage = messageDetails.message?.videoMessage ||
-                       messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
-
-  if (!mediaMessage) {
-    await pico.sendMessage(from, { text: "Envie ou marque um vídeo de até 5 segundos para criar uma figurinha." });
-    return;
-  }
+  const base = Date.now();
+  const inputBase = join(folder, `${base}`);
+  const outputBase = join(folder, `${base}`);
 
   try {
-    // Diretório de saída
-    const outputFolder = "./assets/stickers";
-    await mkdir(outputFolder, { recursive: true });
-
-    const fileExtension = "mp4";  // Como é um vídeo, sempre será mp4
-    const inputPath = join(outputFolder, `${Date.now()}.${fileExtension}`);
-    const stickerPath = join(outputFolder, `${Date.now()}.webp`);
-
-    // Baixar mídia
-    const stream = await downloadContentFromMessage(mediaMessage, "video");
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream) {
-      chunks.push(chunk);
+    // =========================
+    // 📥 DOWNLOAD FUNÇÃO
+    // =========================
+    async function download(media: any, type: any, path: string) {
+      const stream = await downloadContentFromMessage(media, type);
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(chunk);
+      await writeFile(path, Buffer.concat(chunks));
     }
-    await writeFile(inputPath, Buffer.concat(chunks));
 
-    // Verificar duração do vídeo
-    const { stdout } = await execPromise(`ffprobe -i "${inputPath}" -show_entries format=duration -v quiet -of csv="p=0"`);
-    const duration = parseFloat(stdout.trim());
+    // =========================
+    // 🔄 RETRY WRAPPER
+    // =========================
+    async function runFFmpeg(command: () => Promise<void>, retries = 2) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          await command();
+          return;
+        } catch (err) {
+          console.log(`Tentativa ${i + 1} falhou`);
+          if (i === retries) throw err;
+        }
+      }
+    }
 
-    if (duration > 6) {
-      await pico.sendMessage(from, { text: "O vídeo deve ter no máximo 5 segundos." });
-      await rm(inputPath);
+    // =========================
+    // 🧩 STICKER → IMG
+    // =========================
+    if (stickerMessage && isToImg) {
+      const webp = `${inputBase}.webp`;
+      const jpg = `${outputBase}.jpg`;
+
+      await download(stickerMessage, "sticker", webp);
+
+      await runFFmpeg(() =>
+        new Promise((res, rej) => {
+          ffmpeg(webp)
+            .output(jpg)
+            .on("end", () => res())
+            .on("error", rej)
+            .run();
+        })
+      );
+
+      if (!fs.existsSync(jpg)) throw new Error("Falha ao converter");
+
+      await pico.sendMessage(from, {
+        image: fs.readFileSync(jpg),
+        caption: "🖼️ Convertido para imagem",
+      });
+
+      await rm(webp, { force: true });
+      await rm(jpg, { force: true });
       return;
     }
 
-    // Converter vídeo para figurinha
-    const command = `ffmpeg -i "${inputPath}" -vcodec libwebp -vf "scale=512:512:force_original_aspect_ratio=increase,crop=512:512,setsar=1" -loop 0 -preset default -an -vsync 0 -s 512x512 -y "${stickerPath}"`;
-    await execPromise(command);
+    // =========================
+    // 🧩 STICKER → GIF (FIX)
+    // =========================
+    if (stickerMessage && isToGif) {
+      const webp = `${inputBase}.webp`;
+      const mp4 = `${outputBase}.mp4`;
 
-    // Enviar figurinha
-    await pico.sendMessage(from, { sticker: { url: stickerPath } });
+      await download(stickerMessage, "sticker", webp);
 
-    // Remover os arquivos temporários
-    await rm(inputPath);
-    await rm(stickerPath);
+      await runFFmpeg(() =>
+        new Promise((res, rej) => {
+          ffmpeg(webp)
+            .inputOptions(["-ignore_loop", "0"])
+            .outputOptions([
+              "-movflags faststart",
+              "-pix_fmt yuv420p",
+              "-vf scale=512:512:force_original_aspect_ratio=increase",
+            ])
+            .output(mp4)
+            .on("end", () => res())
+            .on("error", rej)
+            .run();
+        })
+      );
 
-    // Remover a pasta, se estiver vazia
-    await rm(outputFolder, { recursive: true, force: true });
+      if (!fs.existsSync(mp4)) throw new Error("Falha ao converter GIF");
 
-  } catch (error) {
-    console.error("Erro ao criar figurinha:", error);
-    await pico.sendMessage(from, { text: "Erro ao criar figurinha. Certifique-se de que a mídia está correta e tente novamente." });
-  }
-}
+      await pico.sendMessage(from, {
+        video: fs.readFileSync(mp4),
+        gifPlayback: true,
+      });
 
-//to img
-
-async function downloadSticker(stickerUrl: string, outputPath: string) {
-  const response = await axios({
-    url: stickerUrl,
-    method: "GET",
-    responseType: "stream",
-  });
-
-  return new Promise<void>((resolve, reject) => {
-    const writer = fs.createWriteStream(outputPath);
-    response.data.pipe(writer);
-
-    writer.on("finish", resolve);
-    writer.on("error", reject);
-  });
-}
-
-/**
- * Função para converter figurinha para imagem (JPEG).
- */
-export async function convertStickerToImage(pico: any, from: string, stickerUrl: string) {
-  try {
-    // Verifique se a URL da figurinha é válida
-    if (!stickerUrl || typeof stickerUrl !== "string") {
-      throw new Error("URL da figurinha inválida.");
+      await rm(webp, { force: true });
+      await rm(mp4, { force: true });
+      return;
     }
 
-    // Diretório de saída
-    const outputFolder = "./assets/converted";
-    await mkdir(outputFolder, { recursive: true });
+    // =========================
+    // 📸 IMG → STICKER
+    // =========================
+    if (imageMessage) {
+      const input = `${inputBase}.jpg`;
+      const output = `${outputBase}.webp`;
 
-    // Caminho temporário para salvar a figurinha antes da conversão
-    const tempStickerPath = join(outputFolder, `${Date.now()}.webp`);
-    const outputImagePath = join(outputFolder, `${Date.now()}.jpeg`);
+      await download(imageMessage, "image", input);
 
-    // Baixar a figurinha
-    await downloadSticker(stickerUrl, tempStickerPath);
+      await runFFmpeg(() =>
+        new Promise((res, rej) => {
+          ffmpeg(input)
+            .outputOptions([
+              "-vcodec libwebp",
+              "-vf scale=512:512:force_original_aspect_ratio=increase,crop=512:512",
+              "-loop 0",
+              "-preset picture",
+              "-qscale 50",
+            ])
+            .output(output)
+            .on("end", () => res())
+            .on("error", rej)
+            .run();
+        })
+      );
 
-    // Converter figurinha para imagem (JPEG)
-    const command = `ffmpeg -i "${tempStickerPath}" -vcodec mjpeg -q:v 2 -y "${outputImagePath}"`;
-    await execPromise(command);
+      if (!fs.existsSync(output)) throw new Error("Falha ao criar sticker");
 
-    // Enviar imagem
-    await pico.sendMessage(from, { image: { url: outputImagePath }, caption: "Aqui está sua figurinha convertida em imagem!" });
+      await pico.sendMessage(from, {
+        sticker: fs.readFileSync(output),
+        packname: PACKNAME,
+        author: AUTHOR,
+      });
 
-    // Remover os arquivos temporários
-    await rm(tempStickerPath);
-    await rm(outputImagePath);
+      await rm(input, { force: true });
+      await rm(output, { force: true });
+      return;
+    }
 
-    // Remover a pasta, se estiver vazia
-    await rm(outputFolder, { recursive: true, force: true });
+    // =========================
+    // 🎥 VIDEO → STICKER
+    // =========================
+    if (videoMessage) {
+      const input = `${inputBase}.mp4`;
+      const output = `${outputBase}.webp`;
 
-  } catch (error) {
-    console.error("Erro ao converter figurinha:", error);
-    await pico.sendMessage(from, { text: "Erro ao converter figurinha para imagem. Tente novamente." });
-  }
-}
+      await download(videoMessage, "video", input);
 
+      await runFFmpeg(() =>
+        new Promise((res, rej) => {
+          ffmpeg(input)
+            .duration(8)
+            .outputOptions([
+              "-vcodec libwebp",
+              "-vf scale=512:512:force_original_aspect_ratio=increase,fps=12,crop=512:512",
+              "-loop 0",
+              "-preset picture",
+              "-qscale 50",
+            ])
+            .output(output)
+            .on("end", () => res())
+            .on("error", rej)
+            .run();
+        })
+      );
 
+      if (!fs.existsSync(output)) throw new Error("Falha ao criar sticker");
 
-//togif
+      await pico.sendMessage(from, {
+        sticker: fs.readFileSync(output),
+        packname: PACKNAME,
+        author: AUTHOR,
+      });
 
-export async function convertStickerToGif(pico: any, from: string, stickerPath: string) {
-  try {
-    // Diretório de saída
-    const outputFolder = "./assets/converted";
-    await mkdir(outputFolder, { recursive: true });
+      await rm(input, { force: true });
+      await rm(output, { force: true });
+      return;
+    }
 
-    const outputFileName = `${Date.now()}`;
-    const outputGifPath = join(outputFolder, `${outputFileName}.gif`);
+    await pico.sendMessage(from, {
+      text: "❌ Envie mídia válida.",
+    });
 
-    // Converter figurinha para GIF
-    const command = `ffmpeg -i "${stickerPath}" -vf "fps=10,scale=512:512:force_original_aspect_ratio=increase,crop=512:512" -y "${outputGifPath}"`;
-    await execPromise(command);
-
-    // Enviar GIF
-    await pico.sendMessage(from, { video: { url: outputGifPath }, caption: "Aqui está sua figurinha convertida em GIF!" });
-
-    // Remover os arquivos temporários
-    await rm(outputGifPath);
-
-    // Remover a pasta, se estiver vazia
-    await rm(outputFolder, { recursive: true, force: true });
-
-  } catch (error) {
-    console.error("Erro ao converter figurinha:", error);
-    await pico.sendMessage(from, { text: "Erro ao converter figurinha para GIF. Tente novamente." });
+  } catch (err: any) {
+    console.error("ERRO FINAL:", err);
+    await pico.sendMessage(from, {
+      text: "❌ Erro ao processar.",
+    });
   }
 }

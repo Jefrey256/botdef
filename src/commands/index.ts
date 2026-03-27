@@ -5,12 +5,20 @@ import { OWNER_NUMBER } from "../config";
 // Comandos
 import { menu } from "./users/menu";
 import { ping } from "./users/ping";
-import { createImageSticker, createVideoSticker, convertStickerToGif, convertStickerToImage } from "./users/sticker";
+import { stickerAll } from "./users/sticker";
 import { alterarP } from "./owner/ftperfil";
 import { videoDow } from "./users/dow";
 import { formatFrom } from "../exports/testedoFrom";
 import { testeDel } from "./admin/delete";
 import { createImageSticker1 } from "./users/tesStk";
+import { velha } from "./users/velha";
+import { antilink } from "./admin/anti";
+import { mutar } from "./admin/mutar";
+import { ban } from "./admin/ban";
+import { desmutar } from "./admin/desmutar";
+import { kick } from "./admin/kick";
+//import { mutar, desmutar } from "./admin/mute";
+//import { figall } from "./users/boostfig";
 
 // Fim comandos
 
@@ -65,18 +73,22 @@ export async function handleMenuCommand(pico: any, from: string, messageDetails:
 
     // Mapeamento de comandos disponíveis
     const commands = {
+       // fig: figall,
+       ban: ban,
+         kick: kick,
+            antilink: antilink,
+            
+       velha: velha,
+       mutar: mutar,
+       desmutar: desmutar,
         help: menu,
         menu: menu,
         ft: alterarP,  // Apenas admin pode usar
         d: videoDow,
         ping: ping,  // Apenas admin pode usar
         // Comandos de figurinha
-        toimg: convertStickerToImage,
-        tomp4: convertStickerToGif,
-        s: createImageSticker,
-        sticker: createImageSticker,
-        stk: createVideoSticker,
-        f: createVideoSticker,
+        s:stickerAll,
+        togif: stickerAll,
         pi: createImageSticker1,
         // Fim
         del: testeDel

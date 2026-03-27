@@ -49,6 +49,8 @@ exports.reng = reng;
 const baileys_1 = __importStar(require("@whiskeysockets/baileys"));
 const pino_1 = require("pino");
 const path_1 = __importDefault(require("path"));
+const muteSystem_1 = require("./commands/system/muteSystem");
+const antiLink_1 = require("./commands/system/antiLink");
 const messages_1 = require("./exports/messages");
 const commands_1 = require("./commands");
 const exports_1 = require("./exports");
@@ -67,6 +69,9 @@ function reng() {
             markOnlineOnConnect: true,
             syncFullHistory: true
         });
+        console.log(riko);
+        (0, muteSystem_1.iniciarSistemaMute)(riko);
+        (0, antiLink_1.iniciarAntiLink)(riko);
         riko.ev.on("connection.update", (update) => {
             var _a;
             const { connection, lastDisconnect } = update;
@@ -132,6 +137,8 @@ function reng() {
                 console.error("Erro ao processar a mensagem:", error);
             }
         }));
+        //
+        //
         return riko;
     });
 }
