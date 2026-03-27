@@ -23,7 +23,7 @@ import { kick } from "./admin/kick";
 // Fim comandos
 
 // Lista de comandos restritos para administradores
-const adminCommands = ['ft',"del", 'ping'];  // Comandos apenas para 
+const adminCommands = ['ft',"del", 'ping' , 'ban', 'kick', 'antilink', 'mutar', 'desmutar'];  // Comandos apenas para 
 
 //
 

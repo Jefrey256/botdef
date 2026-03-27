@@ -16,9 +16,14 @@ function ban(sock, from, msg) {
         const mentioned = (_c = (_b = (_a = msg.message) === null || _a === void 0 ? void 0 : _a.extendedTextMessage) === null || _b === void 0 ? void 0 : _b.contextInfo) === null || _c === void 0 ? void 0 : _c.mentionedJid;
         if (!mentioned)
             return;
-        yield sock.groupParticipantsUpdate(from, mentioned, "remove");
-        mentioned.forEach((u) => __awaiter(this, void 0, void 0, function* () {
-            yield sock.updateBlockStatus(u, "block");
-        }));
+        try {
+            yield sock.groupParticipantsUpdate(from, mentioned, "remove");
+            yield sock.sendMessage(from, {
+                text: "🚫 Usuário banido do grupo",
+            });
+        }
+        catch (e) {
+            console.log("Erro no ban:", e);
+        }
     });
 }

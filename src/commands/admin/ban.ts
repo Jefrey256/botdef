@@ -3,9 +3,13 @@ export async function ban(sock: any, from: string, msg: any) {
 
   if (!mentioned) return;
 
-  await sock.groupParticipantsUpdate(from, mentioned, "remove");
+  try {
+    await sock.groupParticipantsUpdate(from, mentioned, "remove");
 
-  mentioned.forEach(async (u: string) => {
-    await sock.updateBlockStatus(u, "block");
-  });
+    await sock.sendMessage(from, {
+      text: "🚫 Usuário banido do grupo",
+    });
+  } catch (e) {
+    console.log("Erro no ban:", e);
+  }
 }

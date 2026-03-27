@@ -30,7 +30,7 @@ const kick_1 = require("./admin/kick");
 //import { figall } from "./users/boostfig";
 // Fim comandos
 // Lista de comandos restritos para administradores
-const adminCommands = ['ft', "del", 'ping']; // Comandos apenas para 
+const adminCommands = ['ft', "del", 'ping', 'ban', 'kick', 'antilink', 'mutar', 'desmutar']; // Comandos apenas para 
 //
 //
 function getUserRole(pico, groupId, fromUserAdm) {
