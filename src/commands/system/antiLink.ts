@@ -1,4 +1,4 @@
-import { db } from "./database";
+import { load } from "./database";
 
 export function iniciarAntiLink(sock: any) {
   sock.ev.on("messages.upsert", async ({ messages }) => {
@@ -6,19 +6,28 @@ export function iniciarAntiLink(sock: any) {
     if (!msg.message || msg.key.fromMe) return;
 
     const groupId = msg.key.remoteJid!;
+
     const text =
       msg.message.conversation ||
       msg.message.extendedTextMessage?.text ||
       "";
 
-    const setting = db
-      .prepare("SELECT antilink FROM settings WHERE groupId = ?")
-      .get(groupId);
+    const db = load();
 
-    if (!setting?.antilink) return;
+    // verifica se anti-link tá ligado no grupo
+    if (!db.settings[groupId]?.antilink) return;
 
-    if (text.includes("chat.whatsapp.com")) {
-      await sock.sendMessage(groupId, { delete: msg.key });
+    // detecta link (melhorado)
+    const isLink = /(https?:\/\/|www\.|chat\.whatsapp\.com)/gi.test(text);
+
+    if (isLink) {
+      try {
+        await sock.sendMessage(groupId, {
+          delete: msg.key,
+        });
+      } catch (e) {
+        console.log("Erro ao deletar link:", e);
+      }
     }
   });
 }

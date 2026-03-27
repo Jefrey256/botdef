@@ -1,19 +1,26 @@
-import Database from "better-sqlite3";
+import fs from "fs";
+import path from "path";
 
-export const db = new Database("bot.db");
+const FILE = path.join(process.cwd(), "assets", "db.json");
 
-// tabelas
-db.prepare(`
-CREATE TABLE IF NOT EXISTS mutes (
-  user TEXT,
-  groupId TEXT,
-  expire INTEGER
-)
-`).run();
+if (!fs.existsSync(path.dirname(FILE))) {
+  fs.mkdirSync(path.dirname(FILE), { recursive: true });
+}
 
-db.prepare(`
-CREATE TABLE IF NOT EXISTS settings (
-  groupId TEXT PRIMARY KEY,
-  antilink INTEGER DEFAULT 0
-)
-`).run();
+if (!fs.existsSync(FILE)) {
+  fs.writeFileSync(FILE, JSON.stringify({
+    mutes: {},
+    blacklist: {},
+    settings: {}
+  }, null, 2));
+}
+
+function load() {
+  return JSON.parse(fs.readFileSync(FILE, "utf-8"));
+}
+
+function save(data: any) {
+  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
+
+export { load, save };
