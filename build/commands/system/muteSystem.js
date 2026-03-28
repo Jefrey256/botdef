@@ -10,25 +10,32 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.iniciarSistemaMute = iniciarSistemaMute;
-const database_1 = require("./database");
+const muteStore_1 = require("./muteStore");
 function iniciarSistemaMute(sock) {
     sock.ev.on("messages.upsert", (_a) => __awaiter(this, [_a], void 0, function* ({ messages }) {
-        const msg = messages[0];
+        const msg = messages === null || messages === void 0 ? void 0 : messages[0];
+        if (!msg)
+            return;
         if (!msg.message || msg.key.fromMe)
             return;
         const groupId = msg.key.remoteJid;
-        const sender = msg.key.participant || msg.key.remoteJid;
-        const mute = database_1.db.prepare("SELECT * FROM mutes WHERE user = ? AND groupId = ?").get(sender, groupId);
-        if (!mute)
+        const sender = msg.key.participant || groupId;
+        const expire = (0, muteStore_1.getMuted)(sender, groupId);
+        if (!expire)
             return;
-        if (Date.now() > mute.expire) {
-            database_1.db.prepare("DELETE FROM mutes WHERE user = ? AND groupId = ?")
-                .run(sender, groupId);
+        if (Date.now() > expire) {
+            (0, muteStore_1.removeMuted)(sender, groupId);
             return;
         }
+        if (!groupId.endsWith("@g.us"))
+            return;
         try {
-            yield sock.sendMessage(groupId, { delete: msg.key });
+            yield sock.sendMessage(groupId, {
+                delete: msg.key,
+            });
         }
-        catch (_b) { }
+        catch (e) {
+            console.log("Erro ao deletar mensagem:", e);
+        }
     }));
 }

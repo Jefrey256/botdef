@@ -13,17 +13,27 @@ exports.antilink = antilink;
 const database_1 = require("../system/database");
 function antilink(sock, from, msg) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
-        const text = ((_a = msg.message) === null || _a === void 0 ? void 0 : _a.conversation) || "";
+        var _a, _b, _c;
+        const text = ((_a = msg.message) === null || _a === void 0 ? void 0 : _a.conversation) ||
+            ((_c = (_b = msg.message) === null || _b === void 0 ? void 0 : _b.extendedTextMessage) === null || _c === void 0 ? void 0 : _c.text) ||
+            "";
+        const db = (0, database_1.load)();
+        if (!db.settings[from]) {
+            db.settings[from] = {};
+        }
         if (text.includes("on")) {
-            database_1.db.prepare("INSERT OR REPLACE INTO settings (groupId, antilink) VALUES (?, 1)")
-                .run(from);
-            yield sock.sendMessage(from, { text: "✅ Anti-link ativado" });
+            db.settings[from].antilink = true;
+            (0, database_1.save)(db);
+            yield sock.sendMessage(from, {
+                text: "✅ Anti-link ativado",
+            });
         }
         if (text.includes("off")) {
-            database_1.db.prepare("INSERT OR REPLACE INTO settings (groupId, antilink) VALUES (?, 0)")
-                .run(from);
-            yield sock.sendMessage(from, { text: "❌ Anti-link desativado" });
+            db.settings[from].antilink = false;
+            (0, database_1.save)(db);
+            yield sock.sendMessage(from, {
+                text: "❌ Anti-link desativado",
+            });
         }
     });
 }

@@ -3,20 +3,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.db = void 0;
-const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
-exports.db = new better_sqlite3_1.default("bot.db");
-// tabelas
-exports.db.prepare(`
-CREATE TABLE IF NOT EXISTS mutes (
-  user TEXT,
-  groupId TEXT,
-  expire INTEGER
-)
-`).run();
-exports.db.prepare(`
-CREATE TABLE IF NOT EXISTS settings (
-  groupId TEXT PRIMARY KEY,
-  antilink INTEGER DEFAULT 0
-)
-`).run();
+exports.load = load;
+exports.save = save;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const FILE = path_1.default.join(process.cwd(), "assets", "db.json");
+if (!fs_1.default.existsSync(path_1.default.dirname(FILE))) {
+    fs_1.default.mkdirSync(path_1.default.dirname(FILE), { recursive: true });
+}
+if (!fs_1.default.existsSync(FILE)) {
+    fs_1.default.writeFileSync(FILE, JSON.stringify({
+        mutes: {},
+        blacklist: {},
+        settings: {}
+    }, null, 2));
+}
+function load() {
+    return JSON.parse(fs_1.default.readFileSync(FILE, "utf-8"));
+}
+function save(data) {
+    fs_1.default.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}

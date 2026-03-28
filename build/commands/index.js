@@ -21,11 +21,11 @@ const dow_1 = require("./users/dow");
 const delete_1 = require("./admin/delete");
 const tesStk_1 = require("./users/tesStk");
 const velha_1 = require("./users/velha");
-const anti_1 = require("./admin/anti");
-const mutar_1 = require("./admin/mutar");
-const ban_1 = require("./admin/ban");
-const desmutar_1 = require("./admin/desmutar");
-const kick_1 = require("./admin/kick");
+//import { antilink } from "./admin/anti";
+///import { mutar } from "./admin/mutar";
+//import { ban } from "./admin/ban";
+//import { desmutar } from "./admin/desmutar";
+//import { kick } from "./admin/kick";
 //import { mutar, desmutar } from "./admin/mute";
 //import { figall } from "./users/boostfig";
 // Fim comandos
@@ -78,12 +78,12 @@ function handleMenuCommand(pico, from, messageDetails) {
         // Mapeamento de comandos disponíveis
         const commands = {
             // fig: figall,
-            ban: ban_1.ban,
-            kick: kick_1.kick,
-            antilink: anti_1.antilink,
+            //ban: ban,
+            //  kick: kick,
+            // antilink: antilink,
             velha: velha_1.velha,
-            mutar: mutar_1.mutar,
-            desmutar: desmutar_1.desmutar,
+            // mutar: mutar,
+            //desmutar: desmutar,
             help: menu_1.menu,
             menu: menu_1.menu,
             ft: ftperfil_1.alterarP, // Apenas admin pode usar

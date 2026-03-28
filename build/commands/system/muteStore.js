@@ -23,14 +23,14 @@ try {
 catch (_a) {
     muted = {};
 }
-function getMuted() {
+function getMuted(sender, groupId) {
     return muted;
 }
 function setMuted(user, time) {
     muted[user] = time;
     saveMuted();
 }
-function removeMuted(user) {
+function removeMuted(user, groupId) {
     delete muted[user];
     saveMuted();
 }

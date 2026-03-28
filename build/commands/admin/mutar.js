@@ -19,23 +19,39 @@ function parseTime(time) {
         return num * 60000;
     if (time.endsWith("h"))
         return num * 3600000;
+    if (!isNaN(num))
+        return num * 60000; // padrão minutos
     return 0;
 }
 function mutar(sock, from, msg) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f;
         const mentioned = (_c = (_b = (_a = msg.message) === null || _a === void 0 ? void 0 : _a.extendedTextMessage) === null || _b === void 0 ? void 0 : _b.contextInfo) === null || _c === void 0 ? void 0 : _c.mentionedJid;
-        const text = ((_e = (_d = msg.message) === null || _d === void 0 ? void 0 : _d.extendedTextMessage) === null || _e === void 0 ? void 0 : _e.text) || "";
+        const text = ((_d = msg.message) === null || _d === void 0 ? void 0 : _d.conversation) ||
+            ((_f = (_e = msg.message) === null || _e === void 0 ? void 0 : _e.extendedTextMessage) === null || _f === void 0 ? void 0 : _f.text) ||
+            "";
         const args = text.split(" ");
-        if (!mentioned || !args[1])
+        if (!mentioned || !args[1]) {
+            yield sock.sendMessage(from, {
+                text: "Uso: .mutar @user 10m",
+            });
             return;
+        }
         const time = parseTime(args[1]);
-        if (!time)
+        if (!time) {
+            yield sock.sendMessage(from, {
+                text: "Tempo inválido (10s, 5m, 1h)",
+            });
             return;
+        }
+        const db = (0, database_1.load)();
+        if (!db.mutes[from])
+            db.mutes[from] = {};
         const expire = Date.now() + time;
         mentioned.forEach((u) => {
-            database_1.db.prepare("INSERT INTO mutes (user, groupId, expire) VALUES (?, ?, ?)").run(u, from, expire);
+            db.mutes[from][u] = expire;
         });
+        (0, database_1.save)(db);
         yield sock.sendMessage(from, {
             text: `🔇 Mutado por ${args[1]}`,
         });
