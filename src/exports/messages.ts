@@ -8,127 +8,125 @@ import { getMediaContent } from "./dowMedia";
 import path from "path";
 import { proto } from "@whiskeysockets/baileys";
 export const extractMessage = (messageDetails: any) => {
-    // Verificação de que messageDetails está definido e possui uma estrutura válida
-    if (!messageDetails || !messageDetails.message) {
-      console.error("Detalhes da mensagem não encontrados ou estão mal formatados");
-      return {
-        media: undefined,
-        mentions: [],
-        fullMessage: "",
-        from: "Desconhecido",
-        fromUser: "Desconhecido",
-        isCommand: false,
-        commandName: "",
-        args: [],
-        userName: "Desconhecido",
-         userRole: "membro",
-        participant: null,
-      };
-    }
-    
+  if (!messageDetails?.message) {
+    console.error("Mensagem inválida");
+    return null;
+  }
 
-  
-    // Captura todas as possíveis fontes de texto (mensagem simples, legenda ou texto citado)
-    const textMessage = messageDetails.message?.conversation || ""; // Mensagem simples
-    const extendedTextMessage = messageDetails.message?.extendedTextMessage?.text ||
-    messageDetails.message?.extendedTextMessage?.text || ""; // Texto estendido
-    const imageTextMessage = messageDetails.message?.imageMessage?.caption || ""; // Legenda da imagem
-    const videoTextMessage = messageDetails.message?.videoMessage?.caption || ""; // Legenda do vídeo
-    const quotedMessage =
-      messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation || ""; // Texto citado
-  
-    // Compõe o fullMessage a partir da prioridade (texto direto > legenda > citado)
-    const fullMessage =
-      textMessage || extendedTextMessage || imageTextMessage || videoTextMessage || quotedMessage;
-  
-    // Extrai menções de pessoas mencionadas na mensagem
-    const mentions = messageDetails.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-    
-    // Extrai o nome do usuário ou identificador
-    const fromUser = messageDetails.key?.participant?.split("@")[0] || messageDetails.key?.remoteJid?.split("@")[0];
-      const userName = messageDetails.pushName || fromUser;
-    //
-    //
-    const fromUserAdm = messageDetails.key?.participant 
-    ? messageDetails.key?.participant.split('@')[0]  // Se for de um grupo, usa o participant
-    : messageDetails.key?.remoteJid.split('@')[0];   // Se for de um canal ou PV, usa o remoteJid
+  const msg = messageDetails.message;
+  const context = msg?.extendedTextMessage?.contextInfo;
 
-    //
-    const groupId = messageDetails.key?.remoteJid || null;
-    //
-    
-    // Extrai o identificador do remetente
-    const from = messageDetails.key?.remoteJid || "Remetente desconhecido";
-    
-    // Extrai o nome de exibição do usuário
-    //const userName = messageDetails?.pushName || "Usuário Desconhecido";
-    const phoneNumber = messageDetails?.key?.participant?.replace(   
-      /:[0-9][0-9]|:[0-9]/g,
-      "");
-    
-    // Verifica se a mensagem é um comando (com base no prefixo)
-    const isCommand = fullMessage.startsWith(PREFIX);
-  
-    // Extrai o nome do comando e argumentos
-    const commandName = isCommand ? fullMessage.slice(PREFIX.length).split(" ")[0] : "";
-    const args = isCommand ? fullMessage.slice(PREFIX.length).split(" ").slice(1) : [];
-    const key = messageDetails.key || null;
-    const quotedKey = messageDetails?.message?.extendedTextMessage?.contextInfo?.quotedMessage || null;
-    //
-    const quoted = messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage || 
-               messageDetails.message?.imageMessage?.contextInfo?.quotedMessage ||
-               messageDetails.message?.videoMessage?.contextInfo?.quotedMessage ||
-               messageDetails.message?.audioMessage?.contextInfo?.quotedMessage ||
-               messageDetails.message?.documentMessage?.contextInfo?.quotedMessage;
-               
+  // 📌 TEXTOS
+  const textMessage = msg?.conversation || "";
+  const extendedTextMessage = msg?.extendedTextMessage?.text || "";
+  const imageTextMessage = msg?.imageMessage?.caption || "";
+  const videoTextMessage = msg?.videoMessage?.caption || "";
+  const quotedText = context?.quotedMessage?.conversation || "";
 
-    //
-    //
-    const messageContent = messageDetails.message?.extendedTextMessage?.text || 
-    messageDetails.message?.text
-    //
-  
-    // Verificação de mídia (direta ou marcada)
-    const media =
-      messageDetails.message?.imageMessage ||
-      messageDetails.message?.videoMessage ||
-      messageDetails.message?.audioMessage ||
-      messageDetails.message?.stickerMessage ||
-      messageDetails.message?.documentMessage ||
-      messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-      messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage ||
-      messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage ||
-      messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.stickerMessage ||
-      messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.documentMessage ||
+  const fullMessage =
+    textMessage ||
+    extendedTextMessage ||
+    imageTextMessage ||
+    videoTextMessage ||
+    quotedText;
 
-      messageDetails.message?.key?.contextInfo?.quotedMessage||
+  // 📌 QUOTED
+  const quoted =
+    context?.quotedMessage ||
+    msg?.imageMessage?.contextInfo?.quotedMessage ||
+    msg?.videoMessage?.contextInfo?.quotedMessage ||
+    msg?.audioMessage?.contextInfo?.quotedMessage;
 
-      undefined;
-  
-    return {
-      messageContent,
-      key,
-      quoted,
-      quotedKey,
-      media,
-      mentions,
-      fullMessage,
-      from,
-      phoneNumber,
-      fromUser,
-      isCommand,
-      commandName,
-      args,
-      textMessage,
-      userName,
-      groupId,
-      participant: messageDetails.key?.participant || messageDetails.key?.remoteJid,
-    };
-    console.log(`ola: ${phoneNumber}`)
+  // 📌 MÍDIA
+  const imageMessage =
+    msg?.imageMessage || quoted?.imageMessage;
 
+  const videoMessage =
+    msg?.videoMessage || quoted?.videoMessage;
 
+  const stickerMessage =
+    msg?.stickerMessage || quoted?.stickerMessage;
 
+  const audioMessage =
+    msg?.audioMessage || quoted?.audioMessage;
+
+  const documentMessage =
+    msg?.documentMessage || quoted?.documentMessage;
+
+  const media =
+    imageMessage ||
+    videoMessage ||
+    stickerMessage ||
+    audioMessage ||
+    documentMessage ||
+    undefined;
+
+  // 📌 STICKER
+  const isSticker = !!stickerMessage;
+  const isAnimated = stickerMessage?.isAnimated || false;
+
+  // 📌 USUÁRIO
+  const from = messageDetails.key?.remoteJid || "";
+  const fromUser =
+    messageDetails.key?.participant?.split("@")[0] ||
+    from.split("@")[0];
+
+  const userName = messageDetails.pushName || fromUser;
+  const groupId = from;
+
+  const phoneNumber =
+    messageDetails.key?.participant?.replace(/:[0-9]+/g, "") || "";
+
+  // 📌 COMANDOS
+  const isCommand = fullMessage.startsWith(PREFIX);
+  const commandName = isCommand
+    ? fullMessage.slice(PREFIX.length).split(" ")[0]
+    : "";
+
+  const args = isCommand
+    ? fullMessage.slice(PREFIX.length).split(" ").slice(1)
+    : [];
+
+  // 📌 MENÇÕES
+  const mentions = context?.mentionedJid || [];
+  const type =
+  imageMessage ? "image" :
+  videoMessage ? "video" :
+  stickerMessage ? "sticker" :
+  audioMessage ? "audio" :
+  "text";
+  return {
+    type,
+    fullMessage,
+    text: fullMessage,
+
+    isCommand,
+    commandName,
+    args,
+
+    media,
+    imageMessage,
+    videoMessage,
+    stickerMessage,
+    audioMessage,
+    documentMessage,
+
+    isSticker,
+    isAnimated,
+
+    quoted,
+
+    mentions,
+
+    from,
+    fromUser,
+    userName,
+    groupId,
+    phoneNumber,
+
+    participant: messageDetails.key?.participant || from,
   };
+};
 
   
 export function setupMessagingServices(pico, from, messageDetails) {
@@ -145,7 +143,7 @@ export function setupMessagingServices(pico, from, messageDetails) {
       try {
         await pico.sendMessage(from, {
           audio: fs.readFileSync(arquivo),
-          mimetype: "audio/mp4",
+          mimetype: "audio/mpeg",
           ptt: true,
         }, { quoted: messageDetails });
       } catch (error) {

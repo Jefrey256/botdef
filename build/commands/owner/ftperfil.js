@@ -20,15 +20,14 @@ exports.alterarP = alterarP;
 const path_1 = require("path");
 const promises_1 = require("fs/promises");
 const baileys_1 = require("@whiskeysockets/baileys");
+const messages_1 = require("../../exports/messages");
 /**
  * Função para baixar uma imagem e salvar como `banner.png` na pasta `assets/img`.
  */
 function alterarP(pico, from, messageDetails) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, e_1, _b, _c;
-        var _d, _e, _f, _g, _h;
-        const imageMessage = ((_d = messageDetails.message) === null || _d === void 0 ? void 0 : _d.imageMessage) ||
-            ((_h = (_g = (_f = (_e = messageDetails.message) === null || _e === void 0 ? void 0 : _e.extendedTextMessage) === null || _f === void 0 ? void 0 : _f.contextInfo) === null || _g === void 0 ? void 0 : _g.quotedMessage) === null || _h === void 0 ? void 0 : _h.imageMessage);
+        const { imageMessage } = (0, messages_1.extractMessage)(messageDetails);
         if (!imageMessage) {
             console.log("Nenhuma imagem encontrada.");
             yield pico.sendMessage(from, { text: "Envie ou marque uma imagem para substituir o banner." });
@@ -36,16 +35,16 @@ function alterarP(pico, from, messageDetails) {
         }
         try {
             // Diretório de saída
-            const outputFolder = (0, path_1.join)(__dirname, "../../../assets/imgs");
+            const outputFolder = (0, path_1.join)(__dirname, "../../../database/assets/imgs");
             yield (0, promises_1.mkdir)(outputFolder, { recursive: true });
             const filePath = (0, path_1.join)(outputFolder, "menu.png"); // Definindo o nome fixo da imagem como "banner.png"
             // Baixar imagem
             const stream = yield (0, baileys_1.downloadContentFromMessage)(imageMessage, "image");
             const chunks = [];
             try {
-                for (var _j = true, stream_1 = __asyncValues(stream), stream_1_1; stream_1_1 = yield stream_1.next(), _a = stream_1_1.done, !_a; _j = true) {
+                for (var _d = true, stream_1 = __asyncValues(stream), stream_1_1; stream_1_1 = yield stream_1.next(), _a = stream_1_1.done, !_a; _d = true) {
                     _c = stream_1_1.value;
-                    _j = false;
+                    _d = false;
                     const chunk = _c;
                     chunks.push(chunk);
                 }
@@ -53,7 +52,7 @@ function alterarP(pico, from, messageDetails) {
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (!_j && !_a && (_b = stream_1.return)) yield _b.call(stream_1);
+                    if (!_d && !_a && (_b = stream_1.return)) yield _b.call(stream_1);
                 }
                 finally { if (e_1) throw e_1.error; }
             }

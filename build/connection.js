@@ -69,7 +69,7 @@ function reng() {
             markOnlineOnConnect: true,
             syncFullHistory: true
         });
-        console.log(riko);
+        //console.log(riko);
         // iniciarSistemaMute(riko)
         //iniciarAntiLink(riko)
         riko.ev.on("connection.update", (update) => {

@@ -1,14 +1,14 @@
 import { join } from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { downloadContentFromMessage } from "@whiskeysockets/baileys";
+import { extractMessage } from "../../exports/messages";
 
 /**
  * Função para baixar uma imagem e salvar como `banner.png` na pasta `assets/img`.
  */
 export async function alterarP(pico: any, from: string, messageDetails: any) {
-  const imageMessage =
-    messageDetails.message?.imageMessage ||
-    messageDetails.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+  const {imageMessage} = extractMessage(messageDetails);
+  
 
   if (!imageMessage) {
     console.log("Nenhuma imagem encontrada.");
@@ -18,7 +18,7 @@ export async function alterarP(pico: any, from: string, messageDetails: any) {
 
   try {
     // Diretório de saída
-    const outputFolder = join(__dirname, "../../../assets/imgs");
+    const outputFolder = join(__dirname, "../../../database/assets/imgs");
     await mkdir(outputFolder, { recursive: true });
 
     const filePath = join(outputFolder, "menu.png"); // Definindo o nome fixo da imagem como "banner.png"

@@ -3,29 +3,18 @@ import { mkdir, writeFile, rm } from "fs/promises";
 import { join } from "path";
 import fs from "fs";
 import { downloadContentFromMessage } from "@whiskeysockets/baileys";
-
+import { extractMessage } from "../../exports/messages";
 const PACKNAME = "Meu Bot";
 const AUTHOR = "Jefrey";
 
 export async function stickerAll(pico: any, from: string, messageDetails: any) {
-  const msg = messageDetails.message;
+  const {imageMessage, videoMessage, stickerMessage, text} = extractMessage(messageDetails);
 
-  const imageMessage =
-    msg?.imageMessage ||
-    msg?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+  
 
-  const videoMessage =
-    msg?.videoMessage ||
-    msg?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+  
 
-  const stickerMessage =
-    msg?.stickerMessage ||
-    msg?.extendedTextMessage?.contextInfo?.quotedMessage?.stickerMessage;
-
-  const text =
-    msg?.conversation ||
-    msg?.extendedTextMessage?.text ||
-    "";
+  
 
   const isToImg = text.includes("toimg");
   const isToGif = text.includes("togif");

@@ -17,5 +17,6 @@ function menuCaption(messageDetails) {
 [ ✧ ]  Comandos: menu
 [ ✧ ]  Comandos: del
 [ ✧ ]  Comandos: help
+ 
 ╰─═════༻-༺════─╯`;
 }

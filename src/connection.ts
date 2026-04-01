@@ -25,7 +25,7 @@ export async function reng() {
 
         syncFullHistory: true
     });
-    console.log(riko);
+    //console.log(riko);
    // iniciarSistemaMute(riko)
     //iniciarAntiLink(riko)
 

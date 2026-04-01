@@ -1,6 +1,7 @@
 import { PREFIX, BOT_NAME, } from "../../config";
 import { setupMessagingServices } from "../../exports/messages";
 
+
 export  function menuCaption(messageDetails) {
   const userName = messageDetails.participant;
   console.log(userName);
@@ -17,5 +18,6 @@ export  function menuCaption(messageDetails) {
 [ ✧ ]  Comandos: menu
 [ ✧ ]  Comandos: del
 [ ✧ ]  Comandos: help
+ 
 ╰─═════༻-༺════─╯`;
 }

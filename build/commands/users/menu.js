@@ -16,7 +16,7 @@ function menu(pico, from, messageDetails, userName, fromUser, messages) {
     return __awaiter(this, void 0, void 0, function* () {
         const { enviarTexto, enviarImagem, enviarAudioGravacao } = (0, messages_1.setupMessagingServices)(pico, from, messageDetails);
         try {
-            yield enviarAudioGravacao("database/assets/audios/menucmd.mp3");
+            yield enviarAudioGravacao("database/assets/audios/menucmd.m4a");
             yield enviarImagem("database/assets/imgs/menu.png", (0, caption_1.menuCaption)(messageDetails));
         }
         catch (error) {

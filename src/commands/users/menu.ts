@@ -8,7 +8,7 @@ export async function menu(pico, from, messageDetails: any, userName: string, fr
 
     
     try{
-        await enviarAudioGravacao("database/assets/audios/menucmd.mp3")
+        await enviarAudioGravacao("database/assets/audios/menucmd.m4a")
     await enviarImagem("database/assets/imgs/menu.png", menuCaption(messageDetails))
 
     } catch (error){

@@ -25,21 +25,12 @@ const promises_1 = require("fs/promises");
 const path_1 = require("path");
 const fs_1 = __importDefault(require("fs"));
 const baileys_1 = require("@whiskeysockets/baileys");
+const messages_1 = require("../../exports/messages");
 const PACKNAME = "Meu Bot";
 const AUTHOR = "Jefrey";
 function stickerAll(pico, from, messageDetails) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-        const msg = messageDetails.message;
-        const imageMessage = (msg === null || msg === void 0 ? void 0 : msg.imageMessage) ||
-            ((_c = (_b = (_a = msg === null || msg === void 0 ? void 0 : msg.extendedTextMessage) === null || _a === void 0 ? void 0 : _a.contextInfo) === null || _b === void 0 ? void 0 : _b.quotedMessage) === null || _c === void 0 ? void 0 : _c.imageMessage);
-        const videoMessage = (msg === null || msg === void 0 ? void 0 : msg.videoMessage) ||
-            ((_f = (_e = (_d = msg === null || msg === void 0 ? void 0 : msg.extendedTextMessage) === null || _d === void 0 ? void 0 : _d.contextInfo) === null || _e === void 0 ? void 0 : _e.quotedMessage) === null || _f === void 0 ? void 0 : _f.videoMessage);
-        const stickerMessage = (msg === null || msg === void 0 ? void 0 : msg.stickerMessage) ||
-            ((_j = (_h = (_g = msg === null || msg === void 0 ? void 0 : msg.extendedTextMessage) === null || _g === void 0 ? void 0 : _g.contextInfo) === null || _h === void 0 ? void 0 : _h.quotedMessage) === null || _j === void 0 ? void 0 : _j.stickerMessage);
-        const text = (msg === null || msg === void 0 ? void 0 : msg.conversation) ||
-            ((_k = msg === null || msg === void 0 ? void 0 : msg.extendedTextMessage) === null || _k === void 0 ? void 0 : _k.text) ||
-            "";
+        const { imageMessage, videoMessage, stickerMessage, text } = (0, messages_1.extractMessage)(messageDetails);
         const isToImg = text.includes("toimg");
         const isToGif = text.includes("togif");
         const folder = "./assets/temp";
