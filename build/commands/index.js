@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleMenuCommand = handleMenuCommand;
 const messages_1 = require("../exports/messages");
 const config_1 = require("../config");
-// comandos
+// Comandos
 const menu_1 = require("./users/menu");
 const ping_1 = require("./users/ping");
 const sticker_1 = require("./users/sticker");
@@ -21,77 +21,109 @@ const dow_1 = require("./users/dow");
 const delete_1 = require("./admin/delete");
 const tesStk_1 = require("./users/tesStk");
 const velha_1 = require("./users/velha");
-const toimg_1 = require("./users/toimg");
-// comandos restritos
-const adminCommands = ["ft", "del", "ping", "ban", "kick", "antilink", "mutar", "desmutar"];
-// 📌 PEGAR CARGO
-function getUserRole(pico, groupId, user) {
+const mute_1 = require("./admin/mute");
+//import { antilink } from "./admin/anti";
+///import { mutar } from "./admin/mutar";
+//import { ban } from "./admin/ban";
+//import { desmutar } from "./admin/desmutar";
+//import { kick } from "./admin/kick";
+//import { mutar, desmutar } from "./admin/mute";
+//import { figall } from "./users/boostfig";
+// Fim comandos
+// Lista de comandos restritos para administradores
+const adminCommands = ['ft', "del", 'ping', 'ban', 'kick', 'antilink', 'mutar', 'desmutar']; // Comandos apenas para 
+//
+//
+function getUserRole(pico, groupId, fromUserAdm) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (!groupId.includes("@g.us"))
-                return "membro";
-            const group = yield pico.groupMetadata(groupId);
-            const isAdmin = group.participants.some((p) => p.admin && p.id.split("@")[0] === user);
-            if (user === config_1.OWNER_NUMBER)
-                return "dono";
-            if (isAdmin)
-                return "admin";
-            return "membro";
+            // Obtém os participantes do grupo
+            const groupMetadata = yield pico.groupMetadata(groupId);
+            const admins = groupMetadata.participants.filter((participant) => participant.admin);
+            const isAdmin = admins.some((admin) => admin.id.split('@')[0] === fromUserAdm);
+            // Verifica se o número do usuário é o do dono
+            if (fromUserAdm === config_1.OWNER_NUMBER) {
+                return 'dono'; // Usuário é o dono
+            }
+            else if (isAdmin) {
+                return 'admin'; // Usuário é um administrador
+            }
+            else {
+                return 'membro'; // Usuário é um membro
+            }
         }
-        catch (_a) {
-            return "membro";
+        catch (error) {
+            console.error("Erro ao verificar o cargo:", error);
+            return 'membro'; // Caso ocorra erro, considera como membro
         }
     });
 }
-// 🚀 HANDLER
 function handleMenuCommand(pico, from, messageDetails) {
     return __awaiter(this, void 0, void 0, function* () {
-        // ❌ evita loop do bot
-        if (messageDetails.key.fromMe)
-            return;
         const { enviarTexto } = (0, messages_1.setupMessagingServices)(pico, from, messageDetails);
-        const { fullMessage, commandName, fromUser, isCommand, text, userName, groupId } = (0, messages_1.extractMessage)(messageDetails);
-        // 📌 LOG
+        const { fullMessage, commandName, fromUser, media, isCommand, messageContent, textMessage, from: messageFrom, userName } = (0, messages_1.extractMessage)(messageDetails);
+        // Verifica se a mensagem foi enviada pelo próprio bot para evitar loops
+        if (messageFrom === pico) {
+            console.log("Mensagem do bot");
+            return;
+        }
         if (isCommand) {
-            console.log(`» ${userName} → ${commandName}`);
+            console.log(` » ${userName}҂${commandName}`);
+        }
+        else if (isCommand === pico) {
+            return;
         }
         else {
-            console.log(`💬 ${userName}: ${text}`);
+            console.log(`=> ${userName} / ${textMessage} ${messageContent}`);
         }
-        // 📦 COMANDOS
+        // Mapeamento de comandos disponíveis
         const commands = {
-            toimg: toimg_1.toimg,
+            // fig: figall,
+            //ban: ban,
+            //  kick: kick,
+            // antilink: antilink,
             velha: velha_1.velha,
+            mutar: mute_1.mutar,
+            //desmutar: desmutar,
             help: menu_1.menu,
             menu: menu_1.menu,
-            ft: ftperfil_1.alterarP,
+            ft: ftperfil_1.alterarP, // Apenas admin pode usar
             d: dow_1.videoDow,
-            ping: ping_1.ping,
+            ping: ping_1.ping, // Apenas admin pode usar
+            // Comandos de figurinha
             s: sticker_1.stickerAll,
             togif: sticker_1.stickerAll,
             pi: tesStk_1.createImageSticker1,
+            // Fim
             del: delete_1.testeDel
         };
-        if (!isCommand)
-            return;
-        // 📌 cargo
-        const role = yield getUserRole(pico, groupId, fromUser);
-        // 🔒 bloqueio
-        if (adminCommands.includes(commandName) && role === "membro") {
-            return enviarTexto("🚫 Você não tem permissão.");
-        }
-        // 🚀 execução
-        const cmd = commands[commandName];
-        if (!cmd) {
-            return enviarTexto(`❌ Comando "${commandName}" não existe.`);
-        }
-        try {
-            yield cmd(pico, from, messageDetails);
-            console.log(`✅ ${commandName} executado`);
-        }
-        catch (err) {
-            console.error(err);
-            yield enviarTexto(`❌ Erro: ${err.message}`);
+        // Verifica se é um comando
+        if (isCommand) {
+            // Aqui usamos o fromUserAdm extraído
+            const role = yield getUserRole(pico, from, fromUser);
+            //console.log(`Comando: ${commandName} - Usuário: ${fromUser} - Cargo: ${role}`);
+            // Se o comando for restrito para admin e o usuário não for admin nem dono, exibe mensagem de erro
+            if (adminCommands.includes(commandName) && role !== 'admin' && role !== 'dono') {
+                yield enviarTexto("Você não tem permissão para executar este comando.");
+                return;
+            }
+            // Se o comando for público ou o usuário for admin/dono, executa o comando
+            if (commands[commandName]) {
+                try {
+                    // Executa o comando correspondente
+                    yield commands[commandName](pico, from, messageDetails);
+                    console.log(`Comando ${commandName} executado com sucesso.`);
+                }
+                catch (error) {
+                    // Envia mensagem de erro caso o comando falhe
+                    yield enviarTexto(`Erro ao executar o comando ${commandName}: ${error.message}`);
+                    console.log(`Erro ao executar o comando ${commandName}: ${error.message}`);
+                }
+            }
+            else {
+                // Envia mensagem caso o comando não seja encontrado
+                yield enviarTexto(`Comando ${commandName} não encontrado.`);
+            }
         }
     });
 }

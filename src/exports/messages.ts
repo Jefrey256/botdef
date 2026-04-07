@@ -95,7 +95,15 @@ export const extractMessage = (messageDetails: any) => {
   stickerMessage ? "sticker" :
   audioMessage ? "audio" :
   "text";
+
+  const messageContent =
+  messageDetails.message?.extendedTextMessage?.text ||
+  messageDetails.message?.conversation ||
+  "";
+
   return {
+    messageContent,
+    textMessage,
     type,
     fullMessage,
     text: fullMessage,

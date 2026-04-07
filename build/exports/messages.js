@@ -17,7 +17,7 @@ exports.setupMessagingServices = setupMessagingServices;
 const config_1 = require("./config");
 const fs_1 = __importDefault(require("fs"));
 const extractMessage = (messageDetails) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
     if (!(messageDetails === null || messageDetails === void 0 ? void 0 : messageDetails.message)) {
         console.error("Mensagem inválida");
         return null;
@@ -77,7 +77,12 @@ const extractMessage = (messageDetails) => {
             stickerMessage ? "sticker" :
                 audioMessage ? "audio" :
                     "text";
+    const messageContent = ((_t = (_s = messageDetails.message) === null || _s === void 0 ? void 0 : _s.extendedTextMessage) === null || _t === void 0 ? void 0 : _t.text) ||
+        ((_u = messageDetails.message) === null || _u === void 0 ? void 0 : _u.conversation) ||
+        "";
     return {
+        messageContent,
+        textMessage,
         type,
         fullMessage,
         text: fullMessage,
@@ -99,7 +104,7 @@ const extractMessage = (messageDetails) => {
         userName,
         groupId,
         phoneNumber,
-        participant: ((_s = messageDetails.key) === null || _s === void 0 ? void 0 : _s.participant) || from,
+        participant: ((_v = messageDetails.key) === null || _v === void 0 ? void 0 : _v.participant) || from,
     };
 };
 exports.extractMessage = extractMessage;
